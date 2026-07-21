@@ -5,11 +5,13 @@
 ## 目标
 
 1. ✅ 程序化接入 Binance Spot Testnet
-2. ⬜ 订单管理（限价/市价/止盈止损）
-3. ⬜ WebSocket 实时行情订阅
-4. ⬜ 账户资产与持仓管理
-5. ⬜ 基础策略回测框架
-6. ⬜ 自动交易引擎
+2. ✅ 基础策略回测框架（`harness/`）
+3. ✅ LLM 驱动的自动交易引擎（`sandbox_trader.py`，实验性）
+4. ✅ 实时监控面板（`dashboard.py`）
+5. ✅ LLM 预测能力评估（`predict.py`）
+6. ⬜ 订单管理（限价/市价/止盈止损 — Testnet 真实下单）
+7. ⬜ WebSocket 实时行情订阅
+8. ⬜ LLM 数据传递形式优化（参见 `docs/llm-data-transmission.md`）
 
 ## 快速开始
 
@@ -81,13 +83,26 @@ Binance Testnet — 完整连接测试
 
 ```
 binance-sandbox/
-├── README.md          # 本文件
-├── main.py            # 入口脚本
-├── config.py          # 配置管理
-├── .env.example       # 环境变量模板
-├── .env               # 个人 API Key（不提交）
-├── data/              # 数据目录
-├── logs/              # 日志目录
-├── pyproject.toml     # 项目配置
-└── .venv/             # 虚拟环境
+├── README.md           # 本文件
+├── CLAUDE.md           # 项目架构与开发指引
+├── main.py             # 入口：连接测试
+├── config.py           # 配置管理
+├── llm.py              # 共享 LLM 预测模块
+├── sandbox_trader.py   # 纸面交易机器人（实验性）
+├── backtest.py         # 回测 CLI 入口
+├── predict.py          # LLM 预测能力评估
+├── dashboard.py        # Flask 实时监控面板
+├── harness/            # 回测引擎子包
+│   ├── data.py         # K 线数据 + Parquet 缓存
+│   ├── strategy.py     # 策略层
+│   ├── run.py          # 回测核心循环
+│   └── metrics.py      # 绩效指标
+├── docs/               # 设计文档
+│   └── llm-data-transmission.md
+├── data/               # K 线缓存（.parquet）
+├── logs/               # 日志目录
+├── .env.example        # 环境变量模板
+├── .env                # 个人 API Key（不提交）
+├── pyproject.toml      # 项目配置
+└── .venv/              # 虚拟环境
 ```
