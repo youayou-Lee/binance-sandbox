@@ -62,7 +62,6 @@ def backtest(
         current_open = float(df.iloc[i]["open"])
         current_high = highs[i]
         current_low = lows[i]
-        current_close = prices[i]
         current_time = df.iloc[i]["timestamp"]
 
         # ── TP/SL check (every bar while in position) ──────────
@@ -133,6 +132,7 @@ def backtest(
                 direction = None
                 tp = None
                 sl = None
+                last_decision = i - decision_interval  # allow re-entry next bar
                 continue
 
         # ── Decision point ─────────────────────────────────────
@@ -196,9 +196,10 @@ def backtest(
                 gross_pnl = (entry_price - exec_price) / entry_price * (capital * position_size)
 
             fee_close = abs(position) * exec_price * commission
+            old_capital = capital  # save before updating (fix: use pre-close capital as denominator)
             capital = cash + close_value - fee_close
 
-            pnl_pct = (gross_pnl / (capital * position_size)) * 100 if capital > 0 else 0
+            pnl_pct = (gross_pnl / (old_capital * position_size)) * 100 if old_capital > 0 else 0
 
             trades.append({
                 "entry_time": str(entry_time),
@@ -258,14 +259,21 @@ def backtest(
             pnl_pct = (entry_price - last_price) / entry_price * 100
 
         fee_close = abs(position) * last_price * commission
+        old_capital = capital
         capital = cash + close_value - fee_close
+
+        # Apply commission to match TP/SL path consistency
+        gross_pnl_eod = old_capital * position_size * pnl_pct / 100
+        fee = old_capital * position_size * commission * 2  # entry + exit
+        net_pnl_pct = (gross_pnl_eod - fee) / (old_capital * position_size) * 100 \
+            if old_capital > 0 and position_size > 0 else pnl_pct
 
         trades.append({
             "entry_time": str(entry_time),
             "exit_time": str(df.iloc[-1]["timestamp"]),
             "entry_price": round(entry_price, 6),
             "exit_price": round(last_price, 6),
-            "pnl_pct": round(pnl_pct, 2),
+            "pnl_pct": round(net_pnl_pct, 2),
             "direction": direction,
             "exit_reason": "EOD",
             "tp": round(tp, 6) if tp else None,
