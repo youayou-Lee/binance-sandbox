@@ -11,21 +11,15 @@
 import argparse
 import json
 import logging
-import os
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from dotenv import load_dotenv
-from openai import OpenAI
-
 from binance.client import Client
 from config import BINANCE_CONFIG
 
 # ─── 配置 ─────────────────────────────────────────────
-load_dotenv()
-DEEPSEEK_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 
 TRADING_COINS = [
     "ATMUSDT", "SYNUSDT", "PSGUSDT", "BARUSDT", "AAVEUSDT",
@@ -88,43 +82,9 @@ def get_current_prices(pub: Client, symbols: list[str]) -> dict:
 
 
 def llm_predict(prices: list[float]) -> dict | None:
-    """调 LLM 预测。"""
-    if len(prices) < LOOKBACK:
-        return None
-
-    recent = prices[-LOOKBACK:][::-1]
-    low, high = min(recent), max(recent)
-
-    prompt = (
-        "You are a crypto analyst. Predict the next 12 hours.\n\n"
-        f"Recent 100 closing prices (newest->oldest):\n{recent}\n"
-        f"Range: {low:.0f} - {high:.0f}\n"
-        f"Current: {recent[0]:.0f}\n\n"
-        "Respond ONLY with valid JSON:\n"
-        '{"方向": "做多" or "做空", "止盈": <number>, "止损": <number>, "理由": "<reason>"}'
-    )
-
-    for attempt in range(2):
-        try:
-            client = OpenAI(api_key=DEEPSEEK_KEY, base_url="https://api.deepseek.com/v1", timeout=10.0)
-            resp = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=300,
-                temperature=0.5,
-            )
-            content = (resp.choices[0].message.content or "").strip()
-            start = content.find("{")
-            end = content.rfind("}") + 1
-            if start >= 0 and end > start:
-                data = json.loads(content[start:end])
-                if "方向" in data and "止盈" in data and "止损" in data:
-                    data["止盈"] = float(data["止盈"])
-                    data["止损"] = float(data["止损"])
-                    return data
-        except Exception as e:
-            time.sleep(0.5)
-    return None
+    """调 LLM 预测。委托给共享 llm 模块。"""
+    from llm import predict
+    return predict(prices, lookback=LOOKBACK)
 
 
 # ─── 交易状态管理 ────────────────────────────────────
