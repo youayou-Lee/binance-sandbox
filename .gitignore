@@ -1,0 +1,25 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Environment & secrets
+.env
+
+# Runtime state & logs
+trader_state.json
+trader.log
+logs/
+
+# Cached data
+data/
+
+# Generated results
+predict-results.json
+predict-report-*.txt

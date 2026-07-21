@@ -1,0 +1,15 @@
+[project]
+name = "binance-sandbox"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=3.1.3",
+    "httpx>=0.28.1",
+    "openai>=2.44.0",
+    "pandas>=3.0.3",
+    "pyarrow>=24.0.0",
+    "python-binance>=1.0.37",
+    "python-dotenv>=1.2.2",
+]
